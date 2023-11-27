@@ -43,6 +43,18 @@ n_splits = 5
 n_repeats = 2
 rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=42)
 
+
+def experiment_0(preproc, preproc_id):
+    scores2 = np.zeros((len(preprocs), n_splits * n_repeats, len(metrics)))
+    for fold_id, (train, test) in enumerate(rskf.split(X, y)):
+        for clf_id, clf_name in enumerate(clfs):
+            clf = clone(clfs[clf_name])
+            X_train, y_train = preprocs[preproc].fit_resample(X[train], y[train])
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X[test])
+            scores2[clf_id, fold_id] = accuracy_score(y[test], y_pred)
+    np.save(f"results_{preproc_id}", scores2)
+
 def experiment_1(clf_key, clf, preprocs, metrics, X, y, rskf):
     scores = np.zeros((len(preprocs), n_splits * n_repeats, len(metrics)))
     for fold_id, (train, test) in enumerate(rskf.split(X, y)):
@@ -122,5 +134,7 @@ if __name__=='__main__':
     # for clf_key in clfs:
     #     experiment_1(clf_key, clfs[clf_key], preprocs, metrics, X, y, rskf)
     
-    experiment2()
+    #experiment2()
+    for preproc_id, preproc in enumerate(preprocs):
+        experiment_0(preproc, preproc_id)
 
